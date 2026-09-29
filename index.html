@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Happy Teacher's Month</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="scene" id="scene">
+    <div class="hearts-field" id="heartsField"></div>
+
+    <audio id="bgMusic" src="Pretty Girls (feat. Travie McCoy) [Official Video] - Iyaz.mp3" preload="auto" loop></audio>
+    <button class="sound-toggle" id="soundToggle" aria-label="Mute music">🔊</button>
+
+    <!-- STAGE 1: envelope + pull ribbon -->
+    <div class="stage-envelope" id="stageEnvelope">
+      <p class="caption">♥ A Little Surprise ♥</p>
+
+      <div class="envelope">
+        <span class="envelope-flap"></span>
+        <span class="envelope-heart">♥</span>
+      </div>
+
+      <div class="pull-track">
+        <span class="pull-string" id="pullString"></span>
+        <span class="pull-handle" id="pullHandle" aria-label="Hold and pull down to open">♥</span>
+      </div>
+      <p class="pull-hint" id="pullHint">Hold to draw the bow &mdash; release to open ♥</p>
+    </div>
+
+    <!-- STAGE 2/3: the popup window -->
+    <div class="window" id="window" aria-hidden="true">
+      <div class="titlebar">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="titlebar-label">thankyou.exe</span>
+      </div>
+
+      <div class="window-body">
+
+        <!-- the question -->
+        <div class="view view-ask" id="viewAsk">
+          <div class="cat">
+            <span class="cat-ear cat-ear-l"></span>
+            <span class="cat-ear cat-ear-r"></span>
+            <span class="cat-head">
+              <span class="cat-eye cat-eye-l"></span>
+              <span class="cat-eye cat-eye-r"></span>
+              <span class="cat-nose"></span>
+            </span>
+            <span class="cat-heart">♥</span>
+          </div>
+          <p class="ask-text">Happy Teacher's month!!<br>Still the best teacher ever?</p>
+          <div class="ask-buttons">
+            <button class="btn btn-yes" id="btnYes">YES</button>
+            <button class="btn btn-no" id="btnNo">hmm...</button>
+          </div>
+        </div>
+
+        <!-- the reveal -->
+        <div class="view view-letter" id="viewLetter">
+          <p class="yay">Yaaay! I knew it ♥</p>
+          <div class="letter-photo">
+            <img src="https://placehold.co/280x280/f7d9e0/8a3b53?text=our+photo" alt="A photo with your teacher" />
+          </div>
+          <p class="letter-kicker">thank you</p>
+          <h2 class="letter-title">You made this year make sense.</h2>
+          <p class="letter-body">
+            Every lesson you explained twice, every deadline you moved for us,
+            every time you noticed when someone had a bad day &mdash; we saw it.
+            This month is small compared to what you give us all year, but we
+            wanted you to have it anyway.
+          </p>
+          <p class="letter-sign">With gratitude,<br>from your irregular student haha</p>
+          <button class="close-btn" id="closeBtn">close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const scene = document.getElementById('scene');
+    const stageEnvelope = document.getElementById('stageEnvelope');
+    const handle = document.getElementById('pullHandle');
+    const string = document.getElementById('pullString');
+    const hint = document.getElementById('pullHint');
+    const win = document.getElementById('window');
+    const viewAsk = document.getElementById('viewAsk');
+    const viewLetter = document.getElementById('viewLetter');
+    const btnYes = document.getElementById('btnYes');
+    const btnNo = document.getElementById('btnNo');
+    const closeBtn = document.getElementById('closeBtn');
+    const bgMusic = document.getElementById('bgMusic');
+    const soundToggle = document.getElementById('soundToggle');
+    const heartsField = document.getElementById('heartsField');
+
+    /* ---------- pull-to-open envelope ---------- */
+    let MAX_PULL = 64;
+    let THRESHOLD = 46;
+
+    function syncPullRange(){
+      const trackHeight = parseFloat(getComputedStyle(handle.parentElement).height) || 64;
+      MAX_PULL = trackHeight;
+      THRESHOLD = trackHeight * 0.72;
+    }
+    syncPullRange();
+    window.addEventListener('resize', syncPullRange);
+
+    let dragging = false;
+    let startY = 0;
+    let dist = 0;
+
+    function setPull(px){
+      dist = Math.max(0, Math.min(MAX_PULL, px));
+      handle.style.transform = `translateY(${dist}px)`;
+      string.style.height = `${dist}px`;
+      const t = dist / MAX_PULL;
+      stageEnvelope.style.setProperty('--pull', t.toFixed(3));
+      hint.style.opacity = String(1 - t * 0.6);
+    }
+
+    function openWindow(){
+      stageEnvelope.classList.add('is-hidden');
+      win.classList.add('is-open');
+      win.setAttribute('aria-hidden', 'false');
+    }
+
+    function snapBack(){
+      handle.style.transition = 'transform .35s cubic-bezier(.34,1.56,.64,1)';
+      string.style.transition = 'height .35s cubic-bezier(.34,1.56,.64,1)';
+      setPull(0);
+      window.setTimeout(() => {
+        handle.style.transition = '';
+        string.style.transition = '';
+      }, 360);
+    }
+
+    function onDown(e){
+      if (stageEnvelope.classList.contains('is-hidden')) return;
+      dragging = true;
+      startY = (e.touches ? e.touches[0].clientY : e.clientY);
+      handle.setPointerCapture && e.pointerId != null && handle.setPointerCapture(e.pointerId);
+    }
+
+    function onMove(e){
+      if (!dragging) return;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY);
+      setPull(y - startY);
+    }
+
+    function onUp(){
+      if (!dragging) return;
+      dragging = false;
+      if (dist >= THRESHOLD) {
+        handle.style.transition = 'transform .3s ease';
+        string.style.transition = 'height .3s ease';
+        setPull(MAX_PULL);
+        window.setTimeout(openWindow, 160);
+      } else {
+        snapBack();
+      }
+    }
+
+    handle.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    handle.addEventListener('touchstart', onDown, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onUp);
+
+    /* ---------- the evasive "hmm..." button ---------- */
+    let dodgeCount = 0;
+    const MAX_DODGES = 4;
+
+    function dodgeNo(){
+      const container = btnNo.closest('.ask-buttons');
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const bw = btnNo.offsetWidth;
+      const bh = btnNo.offsetHeight;
+      const maxX = Math.max(0, cw - bw);
+      const maxY = Math.max(0, ch - bh);
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+      btnNo.style.position = 'absolute';
+      btnNo.style.left = x + 'px';
+      btnNo.style.top = y + 'px';
+    }
+
+    // desktop: flee as soon as the cursor gets close, no click needed
+    btnNo.addEventListener('mouseenter', () => {
+      if (dodgeCount < MAX_DODGES) {
+        dodgeCount++;
+        dodgeNo();
+      }
+    });
+
+    // mobile has no hover, so approximate the same "flees as you get close"
+    // feeling by watching the finger's position while it drags across the
+    // screen and dodging once it gets near the button.
+    const DODGE_RADIUS = 46;
+    let lastDodgeAt = 0;
+
+    function maybeDodgeFromTouch(touch){
+      if (dodgeCount >= MAX_DODGES) return;
+      const now = Date.now();
+      if (now - lastDodgeAt < 150) return; // avoid firing every touchmove tick
+      const rect = btnNo.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = touch.clientX - cx;
+      const dy = touch.clientY - cy;
+      if (Math.sqrt(dx * dx + dy * dy) < DODGE_RADIUS) {
+        lastDodgeAt = now;
+        dodgeCount++;
+        dodgeNo();
+      }
+    }
+
+    window.addEventListener('touchmove', (e) => {
+      if (!e.touches || !e.touches[0]) return;
+      if (viewAsk.classList.contains('is-hidden')) return;
+      maybeDodgeFromTouch(e.touches[0]);
+    }, { passive: true });
+
+    /* ---------- YES / reveal ---------- */
+    function revealLetter(){
+      viewAsk.classList.add('is-hidden');
+      viewLetter.classList.add('is-visible');
+      burstHearts(18);
+    }
+
+    btnYes.addEventListener('click', revealLetter);
+
+    // click/tap handles both mouse-click and touch-tap in one place, so it
+    // can never get permanently stuck the way a preventDefault'd touchstart
+    // could: every tap either dodges once more or, once maxed out, accepts.
+    btnNo.addEventListener('click', (e) => {
+      if (dodgeCount < MAX_DODGES) {
+        e.preventDefault();
+        dodgeCount++;
+        dodgeNo();
+      } else {
+        revealLetter();
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      win.classList.remove('is-open');
+      win.setAttribute('aria-hidden', 'true');
+      viewAsk.classList.remove('is-hidden');
+      viewLetter.classList.remove('is-visible');
+      btnNo.style.position = '';
+      btnNo.style.left = '';
+      btnNo.style.top = '';
+      dodgeCount = 0;
+      stageEnvelope.classList.remove('is-hidden');
+      handle.style.transition = '';
+      string.style.transition = '';
+      setPull(0);
+    });
+
+    /* ---------- floating hearts background ---------- */
+    function spawnHeart(container, opts = {}){
+      const span = document.createElement('span');
+      span.className = 'floating-heart';
+      span.textContent = opts.glyph || '♥';
+      span.style.left = (opts.left != null ? opts.left : Math.random() * 100) + '%';
+      span.style.animationDuration = (opts.duration || (9 + Math.random() * 10)) + 's';
+      span.style.animationDelay = (opts.delay != null ? opts.delay : Math.random() * -18) + 's';
+      span.style.fontSize = (opts.size || (10 + Math.random() * 16)) + 'px';
+      container.appendChild(span);
+      return span;
+    }
+
+    for (let i = 0; i < 22; i++) spawnHeart(heartsField);
+
+    function burstHearts(n){
+      for (let i = 0; i < n; i++) {
+        const s = spawnHeart(heartsField, {
+          duration: 2.4 + Math.random() * 1.6,
+          delay: 0,
+          size: 12 + Math.random() * 14
+        });
+        s.classList.add('burst-heart');
+        window.setTimeout(() => s.remove(), 4200);
+      }
+    }
+
+    /* ---------- music ---------- */
+    function tryStartMusic(){
+      bgMusic.play().then(() => {
+        soundToggle.classList.remove('needs-tap');
+      }).catch(() => {
+        soundToggle.classList.add('needs-tap');
+      });
+    }
+    tryStartMusic();
+
+    const unlockEvents = ['pointerdown', 'mousedown', 'touchstart', 'click', 'keydown', 'scroll'];
+    function unlockAudio(){
+      if (!bgMusic.paused) { removeUnlockListeners(); return; }
+      bgMusic.play().then(() => {
+        soundToggle.classList.remove('needs-tap');
+        removeUnlockListeners();
+      }).catch(() => {});
+    }
+    function removeUnlockListeners(){
+      unlockEvents.forEach(evt => window.removeEventListener(evt, unlockAudio, true));
+    }
+    unlockEvents.forEach(evt => window.addEventListener(evt, unlockAudio, true));
+
+    soundToggle.addEventListener('click', () => {
+      bgMusic.muted = !bgMusic.muted;
+      soundToggle.textContent = bgMusic.muted ? '🔇' : '🔊';
+      soundToggle.classList.remove('needs-tap');
+      if (!bgMusic.muted && bgMusic.paused) {
+        bgMusic.play().catch(() => {});
+      }
+    });
+  </script>
+</body>
+</html>
