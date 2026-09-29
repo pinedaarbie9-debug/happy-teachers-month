@@ -36,11 +36,12 @@ body{
   padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 
+/* FIX: scene is wider now (was 420px) so the bigger window is not clipped */
 .scene{
   position: relative;
-  width: min(92vw, 420px);
-  height: min(88vh, 660px);
-  height: min(88dvh, 660px);
+  width: min(94vw, 560px);
+  height: min(90vh, 740px);
+  height: min(90dvh, 740px);
   overflow: hidden;
 }
 
@@ -234,7 +235,7 @@ body{
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%) scale(0.85);
-  width: min(88%, 340px);
+  width: min(94%, 500px);
   background: var(--paper);
   border-radius: 12px;
   overflow: hidden;
@@ -275,8 +276,11 @@ body{
   position: relative;
   padding: 26px 24px 24px;
   text-align: center;
-  max-height: min(60vh, 60dvh, 480px);
+  /* FIX: taller so the big photo + letter fit, scrolls only if needed */
+  max-height: min(78vh, 78dvh, 640px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* the ask view */
@@ -430,20 +434,25 @@ body{
   color: var(--heart-dark);
 }
 
+/* FIX: big group photo. Full width, natural ratio, never cropped. */
 .letter-photo{
-  width: 88px;
-  height: 88px;
-  margin: 0 auto 14px;
-  border-radius: 50%;
+  width: 100%;
+  margin: 0 auto 16px;
+  border-radius: 14px;
   overflow: hidden;
   border: 3px solid var(--paper-line);
+  background: var(--pink-1);
+  box-shadow: 0 8px 20px rgba(216,120,140,0.22);
+  line-height: 0;
 }
 
 .letter-photo img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   display: block;
+  width: 100%;
+  height: auto;
+  max-height: 48vh;
+  max-height: 48dvh;
+  object-fit: contain;   /* palitan ng "cover" kung gusto mong puno ang frame (may crop) */
 }
 
 .letter-kicker{
@@ -486,7 +495,7 @@ body{
   border: 1px solid var(--paper-line);
   color: var(--ink-soft);
   border-radius: 20px;
-  padding: 7px 20px;
+  padding: 9px 22px;
   font-size: 12px;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -499,8 +508,14 @@ body{
 
 /* ---------------- responsive ---------------- */
 @media (max-width: 480px){
-  .scene{ width: 100%; height: min(90vh, 90dvh); }
-  .window{ width: min(92%, 340px); }
+  body{ padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
+  .scene{ width: 100%; height: min(94vh, 94dvh); }
+  .window{ width: 100%; }
+  .window-body{ padding: 20px 16px 18px; max-height: min(80vh, 80dvh); }
+  .yay{ font-size: 20px; margin-bottom: 12px; }
+  .letter-title{ font-size: 18px; }
+  .letter-body{ font-size: 13.5px; }
+  .letter-photo img{ max-height: 42vh; max-height: 42dvh; }
 }
 
 @media (max-height: 700px){
@@ -518,8 +533,8 @@ body{
   .pull-hint{ font-size: 10px; margin-top: 8px; }
   .cat{ width: 52px; height: 44px; margin-bottom: 8px; }
   .ask-text{ font-size: 14px; margin-bottom: 10px; }
-  .window-body{ padding: 16px 16px 14px; }
-  .letter-photo{ width: 64px; height: 64px; }
+  .window-body{ padding: 16px 16px 14px; max-height: 74vh; max-height: 74dvh; }
+  .letter-photo img{ max-height: 55vh; max-height: 55dvh; }
   .letter-title{ font-size: 17px; }
   .letter-body{ font-size: 12.5px; }
 }
